@@ -415,6 +415,74 @@
       margin-top: 4px;
     }
 
+    /* Authentication overlay styles */
+    #authOverlay.overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.92);
+      align-items: center;
+      justify-content: center;
+      z-index: 31;
+    }
+    #authOverlay.overlay.visible {
+      display: flex;
+    }
+    .auth-card {
+      position: relative;
+      max-width: 360px;
+      width: 100%;
+      background: linear-gradient(to bottom, #0f172a, #1e293b);
+      border-radius: 24px;
+      padding: 20px 18px;
+      color: #f9fafb;
+      box-shadow: 0 0 40px rgba(250, 204, 21, 0.6);
+      text-align: center;
+    }
+    .auth-input {
+      width: 100%;
+      margin: 8px 0;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #374151;
+      background: #111827;
+      color: #f9fafb;
+      font-size: 14px;
+    }
+    .auth-btn-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .auth-btn {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #facc15;
+      color: #1f2937;
+      transition: background 0.15s ease, transform 0.08s ease;
+    }
+    .auth-btn:hover {
+      background: #fde047;
+    }
+    .auth-btn:active {
+      transform: scale(0.97);
+    }
+    .auth-message {
+      font-size: 12px;
+      margin-top: 4px;
+      margin-bottom: 8px;
+      min-height: 16px;
+    }
+    /* Music toggle button styles (reuse stat-tag) */
+    #musicToggle {
+      cursor: pointer;
+    }
+
     .overlay {
       position: fixed;
       inset: 0;
@@ -609,6 +677,20 @@
     </div>
   </div>
 
+  <!-- Authentication overlay (login/registration) -->
+  <div class="overlay" id="authOverlay">
+    <div class="auth-card">
+      <div style="font-size:20px; font-weight:800; margin-bottom:8px;">Account</div>
+      <div id="authMessage" class="auth-message" style="color:#f87171;"></div>
+      <input type="text" id="authUsername" class="auth-input" placeholder="Benutzername">
+      <input type="password" id="authPassword" class="auth-input" placeholder="Passwort">
+      <div class="auth-btn-row">
+        <button class="auth-btn" id="loginBtn">Einloggen</button>
+        <button class="auth-btn" id="registerBtn">Registrieren</button>
+      </div>
+    </div>
+  </div>
+
   <div class="app">
     <div class="card">
       <div class="glow-top"></div>
@@ -643,6 +725,13 @@
               <span class="icon">⭐</span>
               <span>XP</span>
               <span id="xpLabel">0</span>
+            </div>
+
+            <!-- Music toggle -->
+            <div class="stat-tag" id="musicToggle">
+              <span class="icon">🎵</span>
+              <span>Musik</span>
+              <span id="musicStatus">On</span>
             </div>
           </div>
         </div>
@@ -699,6 +788,16 @@
             <span>Aktuelles World:</span>
             <span class="value" id="statWorld">–</span>
           </div>
+
+          <!-- Current user info and logout -->
+          <div class="stat-row">
+            <span>Nutzer:</span>
+            <span class="value" id="currentUserName">Gast</span>
+          </div>
+          <div class="stat-row">
+            <span></span>
+            <button class="btn" id="logoutBtn" style="font-size:11px; padding:4px 9px; display:none;">Abmelden</button>
+          </div>
         </div>
       </div>
 
@@ -728,7 +827,9 @@
     let audioStarted = false;
     function ensureAudioStarted() {
       if (!audioStarted) {
-        bgMusic.play().catch(()=>{});
+        if (musicOn) {
+          bgMusic.play().catch(()=>{});
+        }
         audioStarted = true;
       }
     }
@@ -804,6 +905,116 @@
 
     const XP_PER_CORRECT = 10;
 
+    // ---- Account management ----
+    let users = [];
+    let currentUser = null;
+    const usersKey = "bilanz_users";
+    const currentUserKey = "bilanz_current_user";
+
+    // Music toggle state
+    let musicOn = true;
+
+    function loadUsers() {
+      const stored = localStorage.getItem(usersKey);
+      if (stored) {
+        try {
+          users = JSON.parse(stored) || [];
+        } catch (e) {
+          users = [];
+        }
+      }
+      if (!users || users.length === 0) {
+        // initialize with default leaderboard players
+        users = leaderboardData.map(p => {
+          const xpForLevel = p.level * 50;
+          return {
+            username: p.name,
+            password: "",
+            xp: xpForLevel,
+            bestStreak: p.streak,
+            level: p.level
+          };
+        });
+        saveUsers();
+      }
+    }
+
+    function saveUsers() {
+      localStorage.setItem(usersKey, JSON.stringify(users));
+    }
+
+    function loadCurrentUser() {
+      const stored = localStorage.getItem(currentUserKey);
+      if (stored) {
+        try {
+          const obj = JSON.parse(stored);
+          const found = users.find(u => u.username === obj.username);
+          if (found) {
+            currentUser = found;
+            xp = found.xp || 0;
+            bestStreak = found.bestStreak || 0;
+          } else {
+            currentUser = null;
+          }
+        } catch (e) {
+          currentUser = null;
+        }
+      }
+    }
+
+    function saveCurrentUser() {
+      if (currentUser) {
+        localStorage.setItem(currentUserKey, JSON.stringify({ username: currentUser.username }));
+      } else {
+        localStorage.removeItem(currentUserKey);
+      }
+    }
+
+    function updateUserStats() {
+      if (!currentUser) return;
+      currentUser.xp = xp;
+      currentUser.bestStreak = bestStreak;
+      currentUser.level = getLevel(xp);
+      const idx = users.findIndex(u => u.username === currentUser.username);
+      if (idx >= 0) {
+        users[idx] = currentUser;
+      } else {
+        users.push(currentUser);
+      }
+      saveUsers();
+      saveCurrentUser();
+      renderLeaderboard();
+      updateUIForUser();
+    }
+
+    function updateUIForUser() {
+      const nameEl = document.getElementById("currentUserName");
+      const logoutBtnEl = document.getElementById("logoutBtn");
+      if (currentUser) {
+        if (nameEl) nameEl.textContent = currentUser.username;
+        if (logoutBtnEl) logoutBtnEl.style.display = "inline-block";
+      } else {
+        if (nameEl) nameEl.textContent = "Gast";
+        if (logoutBtnEl) logoutBtnEl.style.display = "none";
+      }
+    }
+
+    function showAuthOverlay() {
+      const ov = document.getElementById("authOverlay");
+      if (ov) ov.classList.add("visible");
+    }
+    function hideAuthOverlay() {
+      const ov = document.getElementById("authOverlay");
+      if (ov) ov.classList.remove("visible");
+    }
+
+    function updateMusicToggleUI() {
+      const statusEl = document.getElementById("musicStatus");
+      if (statusEl) {
+        statusEl.textContent = musicOn ? "On" : "Off";
+      }
+    }
+
     function getLevel(xp) {
       if (xp >= 250) return 7;
       if (xp >= 200) return 6;
@@ -862,6 +1073,15 @@
     const leaderboardEl = document.getElementById("leaderboard");
     const restartBtn = document.getElementById("restartBtn");
 
+    // Auth and misc elements
+    const loginBtn = document.getElementById("loginBtn");
+    const registerBtn = document.getElementById("registerBtn");
+    const authUsername = document.getElementById("authUsername");
+    const authPassword = document.getElementById("authPassword");
+    const authMessage = document.getElementById("authMessage");
+    const logoutBtnEl = document.getElementById("logoutBtn");
+    const musicToggleEl = document.getElementById("musicToggle");
+
     let feedbackTimeout = null;
     function showFeedback(text, isGood = true) {
       feedbackEl.textContent = text;
@@ -910,23 +1130,30 @@
 
     function renderLeaderboard() {
       leaderboardEl.innerHTML = "";
-      leaderboardData.forEach((p, idx) => {
+      // sort users by XP descending then by bestStreak
+      const sorted = users.slice().sort((a, b) => {
+        const xa = (a.xp || 0);
+        const xb = (b.xp || 0);
+        if (xb !== xa) return xb - xa;
+        return (b.bestStreak || 0) - (a.bestStreak || 0);
+      });
+      sorted.forEach((u, idx) => {
         const row = document.createElement("div");
-        row.className = "leader-item" + (p.name === "Nils" ? " me" : "");
+        row.className = "leader-item" + (currentUser && u.username === currentUser.username ? " me" : "");
         const left = document.createElement("div");
         const name = document.createElement("div");
         name.className = "leader-name";
-        name.textContent = p.name;
+        name.textContent = u.username;
         const sub = document.createElement("div");
         sub.className = "leader-sub";
-        sub.textContent = `Level ${p.level} • Streak ${p.streak}`;
+        const lvl = u.level !== undefined ? u.level : getLevel(u.xp || 0);
+        const streakVal = u.bestStreak || u.streak || 0;
+        sub.textContent = `Level ${lvl} • Streak ${streakVal}`;
         left.appendChild(name);
         left.appendChild(sub);
-
         const rank = document.createElement("div");
         rank.className = "leader-rank";
         rank.textContent = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : "🎲";
-
         row.appendChild(left);
         row.appendChild(rank);
         leaderboardEl.appendChild(row);
@@ -1090,6 +1317,8 @@
       }
       updateStatsUI();
       renderQuestion();
+      // persist stats for logged in user
+      updateUserStats();
     }
 
     function nextQuestion() {
@@ -1126,6 +1355,8 @@
       jokerUsed = false;
       updateStatsUI();
       renderQuestion();
+      // update persisted user stats on reset
+      updateUserStats();
     }
 
     function openWinOverlay() {
@@ -1154,6 +1385,105 @@
     restartBtn.addEventListener("click", () => {
       resetGameTotal();
     });
+
+    // Auth and music toggle event handlers
+    if (loginBtn) {
+      loginBtn.addEventListener("click", () => {
+        const username = authUsername.value.trim();
+        const password = authPassword.value || "";
+        if (!username || !password) {
+          authMessage.textContent = "Bitte Nutzername und Passwort eingeben.";
+          return;
+        }
+        const existing = users.find(u => u.username === username);
+        if (!existing) {
+          authMessage.textContent = "Benutzer nicht gefunden. Bitte registrieren.";
+          return;
+        }
+        if (existing.password !== password) {
+          authMessage.textContent = "Falsches Passwort.";
+          return;
+        }
+        currentUser = existing;
+        xp = existing.xp || 0;
+        bestStreak = existing.bestStreak || 0;
+        saveCurrentUser();
+        hideAuthOverlay();
+        updateUIForUser();
+        renderLeaderboard();
+        updateStatsUI();
+      });
+    }
+
+    if (registerBtn) {
+      registerBtn.addEventListener("click", () => {
+        const username = authUsername.value.trim();
+        const password = authPassword.value || "";
+        if (!username || !password) {
+          authMessage.textContent = "Bitte Nutzername und Passwort eingeben.";
+          return;
+        }
+        if (users.find(u => u.username === username)) {
+          authMessage.textContent = "Benutzername existiert bereits.";
+          return;
+        }
+        const newUser = { username: username, password: password, xp: 0, bestStreak: 0, level: 0 };
+        users.push(newUser);
+        saveUsers();
+        currentUser = newUser;
+        saveCurrentUser();
+        authMessage.textContent = "";
+        hideAuthOverlay();
+        updateUIForUser();
+        renderLeaderboard();
+        updateStatsUI();
+      });
+    }
+
+    if (logoutBtnEl) {
+      logoutBtnEl.addEventListener("click", () => {
+        currentUser = null;
+        saveCurrentUser();
+        // Reset stats but keep users list intact
+        xp = 0;
+        bestStreak = 0;
+        streak = 0;
+        lives = 3;
+        showResult = false;
+        lastCorrect = null;
+        jokerUsed = false;
+        updateUIForUser();
+        renderLeaderboard();
+        updateStatsUI();
+        showAuthOverlay();
+        resetGameTotal();
+      });
+    }
+
+    if (musicToggleEl) {
+      musicToggleEl.addEventListener("click", () => {
+        musicOn = !musicOn;
+        updateMusicToggleUI();
+        if (!musicOn) {
+          bgMusic.pause();
+        } else {
+          // Only play if user has already interacted with audio
+          if (audioStarted) {
+            bgMusic.play().catch(() => {});
+          }
+        }
+      });
+    }
+
+    // Load users and current user from localStorage
+    loadUsers();
+    loadCurrentUser();
+    updateUIForUser();
+    updateMusicToggleUI();
+    // Show auth overlay if no current user
+    if (!currentUser) {
+      showAuthOverlay();
+    }
 
     renderWorlds();
     renderLeaderboard();
