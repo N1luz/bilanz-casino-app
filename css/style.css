@@ -5,8 +5,21 @@
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+/*
+ * Global body styling with a rich casino neon theme.
+ * We layer a radial gradient atop a subtle neon pattern image to evoke
+ * the dark, luxurious aesthetic of Roobet.com while maintaining good
+ * contrast for UI elements. The gradient colors are dark purples that
+ * fade into near‑black, and the neon pattern is scaled to cover the
+ * entire viewport. If you prefer to customise the background, replace
+ * assets/neon‑bg.png with your own copyright‑free image.
+ */
 body {
-  background: radial-gradient(circle at top, #161616 0, #000 55%, #050505 100%);
+  background:
+    /* top radial gradient for subtle vignette */
+    radial-gradient(circle at top, #1a0026 0%, #0f021e 40%, #040011 100%),
+    /* neon pattern */
+    url('../assets/neon-bg.png') no-repeat center/cover;
   color: #f9fafb;
   min-height: 100vh;
   display: flex;
@@ -636,6 +649,222 @@ h1 span {
 
 #musicToggle {
   cursor: pointer;
+}
+
+/*
+ * Theme overrides for Roobet-inspired look & feel
+ * These styles are defined at the end of the CSS file so they override earlier definitions.
+ */
+
+body {
+  /* Dark purple gradient layered on top of a subtle neon pattern image.
+   * The gradient provides a smooth vignette effect while the neon pattern
+   * delivers casino flair. Adjust the image path if you customise assets.
+   */
+  background:
+    radial-gradient(circle at top, #0e061f 0%, #1f0830 55%, #09031c 100%),
+    url('../assets/neon-bg.png') no-repeat center/cover;
+  color: #f5f5fa;
+  padding-bottom: 70px; /* space for bottom navigation */
+}
+
+/* Primary card with neon borders */
+.card {
+  background: linear-gradient(to bottom, #120a2c, #05001a);
+  border: 2px solid rgba(192, 132, 252, 0.7);
+  box-shadow: 0 0 35px rgba(192, 132, 252, 0.6);
+}
+
+/* Softer card used for secondary panels */
+.card-soft {
+  background: radial-gradient(circle at top, #120a2c, #05001a 40%, #05001a 100%);
+  border: 1px solid rgba(192, 132, 252, 0.4);
+}
+
+/* Top glow accent */
+.glow-top {
+  background: radial-gradient(circle at top, rgba(192, 132, 252, 0.42), transparent 70%);
+}
+
+/* Headings */
+h1 {
+  color: #d8b4fe;
+  text-shadow: 0 0 18px rgba(192, 132, 252, 0.8);
+}
+
+/* Subtitle text */
+.subtitle {
+  color: #c7d2fe;
+}
+
+/* Label inside progress bar */
+.badge-label {
+  color: #d8b4fe;
+}
+
+/* Small progress bar */
+.progress {
+  background: #22144b;
+}
+
+/* Fill for progress bar */
+.progress-inner {
+  background: linear-gradient(to right, #c084fc, #a855f7, #8b5cf6);
+}
+
+/* Small stat tags (lives, streak, xp) */
+.stat-tag {
+  background: rgba(31, 24, 54, 0.9);
+}
+
+/* Box for question and answers */
+.question-box {
+  border: 1px solid rgba(192, 132, 252, 0.4);
+  background: radial-gradient(circle at top left, rgba(192, 132, 252, 0.1), #120a2c);
+}
+
+/* Metadata for question (e.g. ID) */
+.question-meta {
+  color: #a78bfa;
+}
+
+/* Question text */
+.question-text {
+  color: #ede9fe;
+}
+
+/* Generic button */
+.btn {
+  background: #120a2c;
+  color: #ede9fe;
+}
+
+.btn-answer {
+  background: #120a2c;
+  border-color: rgba(192, 132, 252, 0.6);
+  color: #ede9fe;
+}
+
+.btn-answer:hover:not(:disabled) {
+  background: #c084fc;
+  color: #120a2c;
+}
+
+/* Label (A,B,C,...) preceding answer text */
+.answer-label {
+  border: 1px solid rgba(192, 132, 252, 0.7);
+  color: #c084fc;
+}
+
+/* Correct / wrong colors */
+.result-text.correct {
+  color: #4ade80;
+}
+.result-text.wrong {
+  color: #f87171;
+}
+
+/* Feedback colors */
+.feedback.good {
+  color: #4ade80;
+}
+.feedback.bad {
+  color: #f87171;
+}
+
+/* Slot bar with moving topics */
+.slot-bar {
+  border: 1px solid rgba(192, 132, 252, 0.5);
+  background: radial-gradient(circle at top, #120a2c, #05001a);
+}
+
+/* Moving text inside slot bar */
+.slot-inner {
+  color: rgba(216, 180, 252, 0.9);
+}
+
+/* Leaderboard row */
+.leader-item {
+  background: #120a2c;
+}
+.leader-item.me {
+  border-color: #c084fc;
+  background: radial-gradient(circle at left, rgba(192, 132, 252, 0.15), #120a2c);
+}
+
+/* End-of-world overlay styling */
+.overlay-card {
+  background: linear-gradient(to bottom, #c084fc, #a855f7);
+  color: #0e061f;
+  box-shadow: 0 0 60px rgba(192, 132, 252, 0.9);
+}
+
+/* Button inside overlay */
+.overlay-btn {
+  background: #120a2c;
+  color: #d8b4fe;
+}
+.overlay-btn:hover {
+  background: #a855f7;
+}
+
+/* Authentication and profile cards */
+.auth-card {
+  background: linear-gradient(to bottom, #120a2c, #05001a);
+  color: #ede9fe;
+  box-shadow: 0 0 40px rgba(192, 132, 252, 0.6);
+}
+
+/* Buttons inside auth and profile forms */
+.auth-btn {
+  background: #c084fc;
+  color: #120a2c;
+}
+.auth-btn:hover {
+  background: #a855f7;
+}
+
+/* Bottom navigation bar */
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 56px;
+  background: radial-gradient(circle at top, #120a2c, #05001a);
+  border-top: 1px solid rgba(192, 132, 252, 0.3);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 50;
+}
+
+.nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: none;
+  border: none;
+  font-size: 11px;
+  color: #a78bfa;
+  cursor: pointer;
+  transition: color 0.15s ease, transform 0.1s ease;
+}
+
+.nav-btn .icon {
+  font-size: 20px;
+}
+
+.nav-btn:hover, .nav-btn.active {
+  color: #d8b4fe;
+  transform: translateY(-3px);
+}
+
+.nav-label {
+  font-size: 9px;
 }
 
 @media (max-width: 850px) {
