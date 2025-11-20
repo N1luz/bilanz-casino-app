@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>Bilanz-Casino App</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <!-- Feedback message -->
@@ -46,7 +46,8 @@
   </div>
 
   <!-- Main app container -->
-  <div class="app">
+  <!-- Home view: world selection + stats (default view) -->
+  <div id="homeView" class="app view">
     <!-- Left: Main quiz/card area -->
     <div class="card">
       <div class="glow-top"></div>
@@ -108,7 +109,104 @@
     </div>
   </div>
 
+  <!-- Quiz view: shows questions and stats when ein World gestartet wurde -->
+  <div id="quizView" class="view" style="display:none;">
+    <div class="card">
+      <div class="glow-top"></div>
+      <div class="row">
+        <div>
+          <h1><span>🎮</span>Quiz-Modus</h1>
+          <div class="subtitle">Teste dein Wissen</div>
+        </div>
+        <div>
+          <div class="row">
+            <div class="badge-row">
+              <span class="badge-label">Level</span>
+              <span id="levelValueQuiz">0</span>
+              <div class="progress"><div class="progress-inner" id="levelProgressQuiz"></div></div>
+            </div>
+          </div>
+          <div class="row" style="margin-top:4px;">
+            <div class="stat-tag"><span class="icon">❤️</span><span id="livesLabelQuiz">3</span></div>
+            <div class="stat-tag"><span class="icon">🔥</span><span>Streak</span><span id="streakLabelQuiz">0</span></div>
+            <div class="stat-tag"><span class="icon">⭐</span><span>XP</span><span id="xpLabelQuiz">0</span></div>
+            <div class="stat-tag" id="musicToggleQuiz"><span class="icon">🎵</span><span id="musicToggleLabelQuiz">On</span></div>
+          </div>
+        </div>
+      </div>
+      <div id="questionAreaQuiz" style="margin-top:14px;"></div>
+    </div>
+    <div class="stats-group">
+      <div class="card-soft">
+        <div style="font-size:13px; font-weight:600; color:#c084fc; display:flex; align-items:center; gap:6px; margin-bottom:4px;">📊 Session-Stats</div>
+        <div class="stats-group">
+          <div class="stat-row"><span>XP gesamt:</span><span class="value" id="statXpQuiz">0</span></div>
+          <div class="stat-row"><span>Aktueller Streak:</span><span class="value" id="statStreakQuiz">0</span></div>
+          <div class="stat-row"><span>Best Streak:</span><span class="value" id="statBestStreakQuiz">0</span></div>
+          <div class="stat-row"><span>Aktuelles World:</span><span class="value" id="statWorldQuiz">–</span></div>
+          <div class="stat-row"><span>Nutzer:</span><span class="value" id="statUserQuiz">–</span></div>
+        </div>
+      </div>
+      <div class="card-soft">
+        <div style="font-size:13px; font-weight:600; color:#c084fc; display:flex; align-items:center; gap:6px; margin-bottom:4px;">🏆 Leaderboard</div>
+        <div class="leaderboard-list" id="leaderboardQuiz"></div>
+        <div class="tiny">Hinweis: Werte sind Demo-Daten. Alle registrierten Nutzer erscheinen hier.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flashcards view (coming soon) -->
+  <div id="flashView" class="view" style="display:none;">
+    <div class="card">
+      <div class="glow-top"></div>
+      <div class="row">
+        <div>
+          <h1><span>🃏</span>Flashcards</h1>
+          <div class="subtitle">Karten-Modus (bald verfügbar)</div>
+        </div>
+      </div>
+      <div style="margin-top:14px; font-size:14px; color:#e5e7eb;">Der Flashcard-Modus ist in Arbeit. Bald kannst du hier Vokabeln und Begriffe als Lernkarten üben.</div>
+    </div>
+  </div>
+
+  <!-- Match view (coming soon) -->
+  <div id="matchView" class="view" style="display:none;">
+    <div class="card">
+      <div class="glow-top"></div>
+      <div class="row">
+        <div>
+          <h1><span>🧩</span>Match</h1>
+          <div class="subtitle">Zuordnen-Modus (bald verfügbar)</div>
+        </div>
+      </div>
+      <div style="margin-top:14px; font-size:14px; color:#e5e7eb;">Der Zuordnen-Modus ist in Arbeit. Bald kannst du hier Begriffe und Definitionen zuordnen.</div>
+    </div>
+  </div>
+
+  <!-- Profile overlay (account settings) -->
+  <div class="overlay" id="profileOverlay">
+    <div class="auth-card profile-card">
+      <h2 style="font-size:22px; margin-bottom:6px;">Mein Profil</h2>
+      <div class="auth-message" id="profileMessage"></div>
+      <input type="text" id="profileUsername" class="auth-input" placeholder="Neuer Nutzername" />
+      <input type="password" id="profilePassword" class="auth-input" placeholder="Neues Passwort" />
+      <div class="auth-btn-row">
+        <button class="auth-btn" id="profileSaveBtn">Speichern</button>
+        <button class="auth-btn" id="profileCancelBtn">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom navigation bar -->
+  <nav class="bottom-nav">
+    <button class="nav-btn" data-view="home"><span class="icon">🏠</span><span class="nav-label">Home</span></button>
+    <button class="nav-btn" data-view="quiz"><span class="icon">🎮</span><span class="nav-label">Quiz</span></button>
+    <button class="nav-btn" data-view="flash"><span class="icon">🃏</span><span class="nav-label">Karten</span></button>
+    <button class="nav-btn" data-view="match"><span class="icon">🧩</span><span class="nav-label">Match</span></button>
+    <button class="nav-btn" data-view="profile"><span class="icon">👤</span><span class="nav-label">Profil</span></button>
+  </nav>
+
   <!-- App script -->
-  <script src="js/app.js" defer></script>
+  <script src="app.js" defer></script>
 </body>
 </html>
