@@ -292,6 +292,9 @@
   function updateMusic() {
     bgMusic.volume = musicOn ? 0.12 : 0;
     document.getElementById('musicToggleLabel').textContent = musicOn ? 'On' : 'Off';
+    if (musicToggleLabelQuizEl) {
+      musicToggleLabelQuizEl.textContent = musicOn ? 'On' : 'Off';
+    }
   }
 
   // Start playing background music once user interacts
@@ -319,6 +322,9 @@
   let jokerUsed = false;
   let showResult = false;
   let lastCorrect = null;
+
+  // Container where questions will be rendered. Defaults to home view's question area.
+  let currentQuestionContainerId = 'questionArea';
 
   const XP_PER_CORRECT = 10;
 
@@ -375,6 +381,38 @@
   const registerBtn = document.getElementById('registerBtn');
   const musicToggleEl = document.getElementById('musicToggle');
 
+  // Additional DOM references for quiz view (duplicates of stats and labels)
+  const levelValueQuizEl = document.getElementById('levelValueQuiz');
+  const levelProgressQuizEl = document.getElementById('levelProgressQuiz');
+  const livesLabelQuizEl = document.getElementById('livesLabelQuiz');
+  const streakLabelQuizEl = document.getElementById('streakLabelQuiz');
+  const xpLabelQuizEl = document.getElementById('xpLabelQuiz');
+  const statXpQuizEl = document.getElementById('statXpQuiz');
+  const statStreakQuizEl = document.getElementById('statStreakQuiz');
+  const statBestStreakQuizEl = document.getElementById('statBestStreakQuiz');
+  const statWorldQuizEl = document.getElementById('statWorldQuiz');
+  const statUserQuizEl = document.getElementById('statUserQuiz');
+  const leaderboardQuizEl = document.getElementById('leaderboardQuiz');
+  const musicToggleQuizEl = document.getElementById('musicToggleQuiz');
+  const musicToggleLabelQuizEl = document.getElementById('musicToggleLabelQuiz');
+
+  // Elements for bottom navigation
+  const navButtons = document.querySelectorAll('.nav-btn');
+
+  // Profile overlay elements
+  const profileOverlayEl = document.getElementById('profileOverlay');
+  const profileMessageEl = document.getElementById('profileMessage');
+  const profileUsernameEl = document.getElementById('profileUsername');
+  const profilePasswordEl = document.getElementById('profilePassword');
+  const profileSaveBtn = document.getElementById('profileSaveBtn');
+  const profileCancelBtn = document.getElementById('profileCancelBtn');
+
+  // Views
+  const homeViewEl = document.getElementById('homeView');
+  const quizViewEl = document.getElementById('quizView');
+  const flashViewEl = document.getElementById('flashView');
+  const matchViewEl = document.getElementById('matchView');
+
   // ---------------------- Storage helpers ----------------------
   function loadUsers() {
     try {
@@ -421,6 +459,7 @@
   function updateStatsUI() {
     const lvl = getLevel(xp);
     const progress = getLevelProgress(xp);
+    // Update home view labels
     levelValueEl.textContent = lvl;
     levelProgressEl.style.width = `${(progress * 100).toFixed(0)}%`;
     livesLabelEl.textContent = lives;
@@ -431,6 +470,17 @@
     statBestStreakEl.textContent = bestStreak;
     statWorldEl.textContent = currentWorld ? currentWorld.name : '–';
     statUserEl.textContent = currentUser ? currentUser.username : '–';
+    // Update quiz view labels if present
+    if (levelValueQuizEl) levelValueQuizEl.textContent = lvl;
+    if (levelProgressQuizEl) levelProgressQuizEl.style.width = `${(progress * 100).toFixed(0)}%`;
+    if (livesLabelQuizEl) livesLabelQuizEl.textContent = lives;
+    if (streakLabelQuizEl) streakLabelQuizEl.textContent = streak;
+    if (xpLabelQuizEl) xpLabelQuizEl.textContent = xp;
+    if (statXpQuizEl) statXpQuizEl.textContent = xp;
+    if (statStreakQuizEl) statStreakQuizEl.textContent = streak;
+    if (statBestStreakQuizEl) statBestStreakQuizEl.textContent = bestStreak;
+    if (statWorldQuizEl) statWorldQuizEl.textContent = currentWorld ? currentWorld.name : '–';
+    if (statUserQuizEl) statUserQuizEl.textContent = currentUser ? currentUser.username : '–';
   }
 
   function renderWorlds() {
@@ -513,7 +563,7 @@
 
   // Render the current question or intro
   function renderQuestion() {
-    const container = document.getElementById('questionArea');
+    const container = document.getElementById(currentQuestionContainerId);
     container.innerHTML = '';
     if (!currentWorld) {
       // Intro view
@@ -820,6 +870,107 @@
     } else {
       resetGameTotal();
     }
+  });
+
+  // ---------------------- Bottom navigation & view switching ----------------------
+  /**
+   * Shows the selected view and hides the others. Each view corresponds to a section
+   * of the application (home, quiz, flashcards, match, profile). When switching
+   * to the quiz view, we also change the question container so that questions
+   * render in the appropriate area. The profile view does not have its own
+   * content section; instead it opens the profile overlay for editing user
+   * information.
+   *
+   * @param {string} view - one of 'home', 'quiz', 'flash', 'match', 'profile'
+   */
+  function showView(view) {
+    // Toggle main view containers
+    homeViewEl.style.display = view === 'home' ? '' : 'none';
+    quizViewEl.style.display = view === 'quiz' ? '' : 'none';
+    flashViewEl.style.display = view === 'flash' ? '' : 'none';
+    matchViewEl.style.display = view === 'match' ? '' : 'none';
+    // Show profile overlay when profile is selected
+    if (view === 'profile') {
+      profileOverlayEl.classList.add('visible');
+    } else {
+      profileOverlayEl.classList.remove('visible');
+    }
+    // Determine which container to use for questions (quiz vs home intro)
+    currentQuestionContainerId = view === 'quiz' ? 'questionAreaQuiz' : 'questionArea';
+    // Re-render question and update stats so that labels reflect current values
+    renderQuestion();
+    updateStatsUI();
+  }
+
+  // Attach click handlers to navigation buttons
+  navButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const view = btn.getAttribute('data-view');
+      showView(view);
+    });
+  });
+
+  // ---------------------- Profile editing ----------------------
+  /**
+   * Saves changes to the current user's profile. Allows changing the
+   * username (ensuring uniqueness) and/or password. Updates persistent
+   * storage and refreshes UI elements accordingly. Displays feedback in
+   * the profile message area.
+   */
+  profileSaveBtn.addEventListener('click', () => {
+    const newName = profileUsernameEl.value.trim();
+    const newPass = profilePasswordEl.value;
+    if (!newName && !newPass) {
+      profileMessageEl.textContent = 'Bitte gib einen neuen Nutzernamen oder ein neues Passwort ein.';
+      return;
+    }
+    if (!currentUser) {
+      profileMessageEl.textContent = 'Kein Benutzer angemeldet.';
+      return;
+    }
+    // Handle username change
+    if (newName && newName !== currentUser.username) {
+      if (users.some(u => u.username === newName)) {
+        profileMessageEl.textContent = 'Benutzername existiert bereits.';
+        return;
+      }
+      // Update in users array
+      const idx = users.findIndex(u => u.username === currentUser.username);
+      if (idx !== -1) {
+        users[idx].username = newName;
+      }
+      currentUser.username = newName;
+      saveUsers(users);
+      saveCurrentUser(currentUser.username);
+    }
+    // Handle password change
+    if (newPass) {
+      const idx = users.findIndex(u => u.username === currentUser.username);
+      if (idx !== -1) {
+        users[idx].password = newPass;
+      }
+      saveUsers(users);
+    }
+    // Provide feedback and clear inputs
+    profileMessageEl.textContent = 'Profil aktualisiert.';
+    profileUsernameEl.value = '';
+    profilePasswordEl.value = '';
+    // Update leaderboard and stats
+    renderLeaderboard();
+    updateStatsUI();
+  });
+
+  /**
+   * Cancels profile editing. Hides the profile overlay and clears any
+   * temporary input fields or messages. Returns to the home view.
+   */
+  profileCancelBtn.addEventListener('click', () => {
+    profileOverlayEl.classList.remove('visible');
+    profileMessageEl.textContent = '';
+    profileUsernameEl.value = '';
+    profilePasswordEl.value = '';
+    // Show home view after cancel
+    showView('home');
   });
 
   // ---------------------- Init ----------------------
